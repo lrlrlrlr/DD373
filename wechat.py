@@ -1,5 +1,4 @@
 import time,itchat
 
 itchat.auto_login(hotReload=True)
-itchat.send()
-# 修改测试
+itchat.send('Hello, filehelper', toUserName='filehelper')

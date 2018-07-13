@@ -1,4 +1,4 @@
-import re, requests, time
+import re, requests, time, itchat
 from bs4 import BeautifulSoup
 
 
@@ -40,13 +40,19 @@ def parse_html(html):
     pass
 
 
-def report_info(infos, raw_single_price=175):
+def report_info(infos, raw_single_price=178, report_type='print'):
     # todo 这里把info发邮箱或者wechat
     count = 0
     for i in infos:
         if i['raw_single_price'] > raw_single_price:
             print(i)
             count += 1
+            if report_type == 'print':
+                print(i)
+            elif report_type == 'wechat':
+                itchat.send(str(i), toUserName='filehelper')
+            else:
+                assert 'wrong report type!'
     if count == 0:
         print(time.ctime(), '暂时没有符合条件的!')
     pass
@@ -71,4 +77,6 @@ if __name__ == '__main__':
     
     
     # 开始运行:
+    # itchat.auto_login(hotReload=True) # todo 这里要做成class内置
+    # itchat.send('DD373爬虫开始运行!', toUserName='filehelper')
     main()
