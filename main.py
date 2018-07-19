@@ -19,9 +19,9 @@ def parse_html(html):
             # 购买链接
             href = 'https://www.dd373.com' + i.find_all('a', 'titleText')[0]['href']
             # 单价('xxxx万金/元')
-            single_price = i.find_all('span', 'red')[0].parent.text or i.find_all(text=re.compile('1元=\d+\.\d+万金'))[0]
+            single_price = i.find_all('span', 'red')[0].parent.text or i.find_all(text=re.compile('1元=\d+\.\d+[万金|个]'))[0]
             # 纯单价(数字)
-            raw_single_price = float(re.search(r'(?<=1元=)\d+\.\d+(?=万金)', single_price).group())
+            raw_single_price = float(re.search(r'(?<=1元=)\d+\.\d+(?=[万金|个])', single_price).group())
             # 商品数量
             amount = i.find_all('div', 'num left')[0].text.strip()
             
@@ -41,7 +41,6 @@ def parse_html(html):
 
 
 def report_info(infos, raw_single_price=178, report_type='print'):
-    # todo 这里把info发邮箱或者wechat
     count = 0
     for i in infos:
         if i['raw_single_price'] > raw_single_price:
@@ -54,20 +53,43 @@ def report_info(infos, raw_single_price=178, report_type='print'):
             else:
                 assert 'wrong report type!'
     if count == 0:
-        print(time.ctime(), '暂时没有符合条件的!')
+        print(time.ctime(), '暂时没有符合条件的!当前最低价格:%s'%infos[0].get('raw_single_price'))
     pass
 
 
 def main():
     while True:
-        # this url is 玩具城金币价格 page
+        # # this url is 玩具城金币价格 page
         target_url = 'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html'
+        # # this url is 玩具城混沌玛瑙价格 page
+        # target_url = 'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-knrc07-0-0-0-0-0-0-0-0.html'
         html = get_html(target_url)
         infos = parse_html(html)
         report_info(infos)
         
         time.sleep(60)
 
+def main2():
+    while True:
+        # 监测玩具城金币价格>1:155的
+        print('金币价格',end='')
+        target_url = 'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html'
+        html = get_html(target_url)
+        infos = parse_html(html)
+        report_info(infos,raw_single_price=155)
+
+
+
+
+        # 监测玩具城玛瑙价格>1:54的
+        print('玛瑙价格',end='')
+        target_url = 'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-knrc07-0-0-0-0-0-0-0-0.html'
+        html = get_html(target_url)
+        infos = parse_html(html)
+        report_info(infos,raw_single_price=53)
+
+        time.sleep(60)
+        pass
 
 if __name__ == '__main__':
     # todo 测试功能:
@@ -79,4 +101,4 @@ if __name__ == '__main__':
     # 开始运行:
     # itchat.auto_login(hotReload=True) # todo 这里要做成class内置
     # itchat.send('DD373爬虫开始运行!', toUserName='filehelper')
-    main()
+    main2()
