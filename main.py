@@ -57,7 +57,33 @@ def report_info(infos, raw_single_price=178, report_type='print'):
     pass
 
 
+
+def write_db(info):
+    '''
+    下面是info格式
+  {'amount': '',  'href': 'https://www.dd373.com/buy/third-259134709.html',  'raw_single_price': 110.0, 'total_price': '10.00元'}
+    '''
+    # 写入sqlite数据库
+
+
+
+    pass
+
+
+def price_parse(infos):
+    # 价格排序
+    infos.sort(key=lambda x:x.get('raw_single_price'),reverse=True)
+
+    # 筛选出有amount(有货)的最低价商品
+    for info in infos:
+        if info.get('amount')<'1' or not info.get('amount').isnumeric():
+            pass
+        else:
+            return info
+    pass
+
 def main():
+    # 监测价格,导出到数据库!
     while True:
         # # this url is 玩具城金币价格 page
         target_url = 'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html'
@@ -65,8 +91,14 @@ def main():
         # target_url = 'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-knrc07-0-0-0-0-0-0-0-0.html'
         html = get_html(target_url)
         infos = parse_html(html)
-        report_info(infos)
-        
+
+
+
+        # 用price_parse筛选出有货的最低价 && 写入数据库
+        info=price_parse(infos)
+
+        write_db(info)
+
         time.sleep(60)
 
 def main2():
@@ -101,4 +133,4 @@ if __name__ == '__main__':
     # 开始运行:
     # itchat.auto_login(hotReload=True) # todo 这里要做成class内置
     # itchat.send('DD373爬虫开始运行!', toUserName='filehelper')
-    main2()
+    main()
