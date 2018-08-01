@@ -1,4 +1,5 @@
-import re, requests, time, itchat
+import re, requests, time, itchat,webbrowser
+import sqlite3
 from bs4 import BeautifulSoup
 
 
@@ -67,7 +68,6 @@ def write_db(info={'amount': '1', 'href': 'https://www.dd373.com/buy/third-25913
     # 写入sqlite数据库
 
     # INSERT INTO test VALUES("2018-07-22","12元","www.baidu.com",18.10,"");
-    import sqlite3
     conn=sqlite3.connect('dd373.db')
     c=conn.cursor()
     # todo 如果没有表,新建
@@ -126,37 +126,59 @@ def main(url,table_name):
         print(f"{time.ctime()}, writing database...")
 
 
-def main_start():
+def alert(target_price_gold=130,table_name='wjc_gold'):
+    # 监测玩具城金币价格>1:target_price_gold的
+    # 查询数据库
+    conn=sqlite3.connect('dd373.db')
+    c=conn.cursor()
+    query=c.execute(f'SELECT raw_single_price,href FROM {table_name} WHERE time=(SELECT MAX(time) FROM {table_name});')
+    query_result=query.fetchone()
+    conn.close()
+
+    raw_single_price,href=query_result
+    if float( raw_single_price )>target_price_gold:
+        print(f'{time.ctime()}发现低于{target_price_gold}的商品上架! {href}')
+        return href
+    else:
+        print(f'{time.ctime()}  未监测到合适价格.')
+        return None
+
+    pass
+
+
+
+def main_start(alert_on=True,target_price_gold=140):
     # 轮番查询玩具城各个材料的价格,写入db
     url_dict={
         'wjc_gold': 'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html',
         'wjc_manao':'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-knrc07-0-0-0-0-0-0-0-0.html',
         'wjc_xiaomanao':'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-fqujdj-0-0-0-0-0-0-0-0.html'
     }
+
+
+    openweb_url=None
     while True:
         for table_name,url in url_dict.items():
-            main(url,table_name)
-            time.sleep(30)
+            try:
+                main(url,table_name)
 
-def main2(target_price_gold=140,target_price_manao=50,report_type='print'):
-    # 监测玩具城金币价格>1:target_price_gold的
-    print('金币价格',end='')
-    target_url = 'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html'
-    html = get_html(target_url)
-    infos = parse_html(html)
-    report_info(infos,raw_single_price=target_price_gold,report_type=report_type)
+                # 监测模块,(开关, 防重复播报)
+                if alert_on==True:
+                    query_result=alert(target_price_gold=target_price_gold)
+                    if (query_result is None) or (query_result==openweb_url):
+                        pass
+                    else:
+                        openweb_url=query_result
+                        webbrowser.open(openweb_url)
+
+                time.sleep(30)
+            except:
+                time.sleep(30)
+                pass
 
 
 
 
-    # 监测玩具城玛瑙价格>1:50的
-    print('玛瑙价格',end='')
-    target_url = 'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-knrc07-0-0-0-0-0-0-0-0.html'
-    html = get_html(target_url)
-    infos = parse_html(html)
-    report_info(infos,raw_single_price=target_price_manao,report_type=report_type)
-    time.sleep(60)
-    pass
 
 if __name__ == '__main__':
     # todo 测试功能:
@@ -174,4 +196,5 @@ if __name__ == '__main__':
     #     main2(target_price_gold=130,target_price_manao=55)
 
     # 轮番查询玩具城各个材料的价格,写入db
-    main_start()
+    main_start(target_price_gold=130)
+    # alert()
