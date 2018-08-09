@@ -152,7 +152,9 @@ def main_start(alert_on=True,target_price_gold=140):
     url_dict={
         'wjc_gold': 'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html',
         'wjc_manao':'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-knrc07-0-0-0-0-0-0-0-0.html',
-        'wjc_xiaomanao':'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-fqujdj-0-0-0-0-0-0-0-0.html'
+        'wjc_xiaomanao':'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-fqujdj-0-0-0-0-0-0-0-0.html',
+        'nwz_gold':'https://www.dd373.com/s/1xj2qx-wjm3vp-qmfpmj-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html',
+        'tly_gold':'https://www.dd373.com/s/1xj2qx-wjm3vp-rs23j0-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html'
     }
 
 
@@ -171,9 +173,9 @@ def main_start(alert_on=True,target_price_gold=140):
                         openweb_url=query_result
                         webbrowser.open(openweb_url)
 
-                time.sleep(30)
+                time.sleep(15)
             except:
-                time.sleep(30)
+                time.sleep(15)
                 pass
 
 
@@ -196,5 +198,5 @@ if __name__ == '__main__':
     #     main2(target_price_gold=130,target_price_manao=55)
 
     # 轮番查询玩具城各个材料的价格,写入db
-    main_start(target_price_gold=130)
+    main_start(alert_on=False,target_price_gold=130)
     # alert()
