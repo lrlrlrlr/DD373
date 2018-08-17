@@ -49,6 +49,8 @@ def parse_html(html):
                 'raw_single_price': raw_single_price,
                 'amount': amount
             }
+
+            print(info)
             infos.append(info)
         except:
             pass
@@ -148,9 +150,14 @@ def main(url,table_name):
         print(f"{time.ctime()}, writing database: {result}")
 
 
-def alert(target_price_gold=130,table_name='wjc_gold'):
+def alert(target_price=130,table_name='wjc_gold'):
     # 监测玩具城金币价格>1:target_price_gold的
+
+
+
+
     # 查询数据库
+
     conn=sqlite3.connect('dd373.db')
     c=conn.cursor()
     query=c.execute(f'SELECT raw_single_price,href FROM {table_name} WHERE time=(SELECT MAX(time) FROM {table_name});')
@@ -158,19 +165,41 @@ def alert(target_price_gold=130,table_name='wjc_gold'):
     conn.close()
 
     raw_single_price,href=query_result
-    if float( raw_single_price )>target_price_gold:
-        print(f'{time.ctime()}发现低于{target_price_gold}的商品上架! {href}')
+    # if 'gold' in table_name or 'manao' in table_name:
+    #     if float( raw_single_price )>target_price:
+    #         print(f'{time.ctime()}发现低于{target_price}的商品上架! {href}')
+    #         return href
+    #
+    #     else:
+    #         print(f'{time.ctime()}  未监测到合适价格.')
+    #         return none
+    # elif 'gem' in table_name:
+    #     if float( raw_single_price )<target_price:
+    #         print(f'{time.ctime()}发现低于{target_price}的商品上架! {href}')
+    #         return href
+    #
+    #     else:
+    #         print(f'{time.ctime()}  未监测到合适价格.')
+    #         return None
+    #
+    # pass
+
+
+    if 'gold' in table_name or 'manao' in table_name:
+        match=float( raw_single_price )>=target_price
+    elif 'gem' in table_name:
+        match=float( raw_single_price )<=target_price
+
+
+
+    if match:
+        print(f'{time.ctime()}发现低于{target_price}的商品上架! {href}')
         return href
     else:
         print(f'{time.ctime()}  未监测到合适价格.')
         return None
 
-    pass
-
-
-
-
-def main_start(alert_on=True,target_price_gold=140):
+def main_start(alert_on=True,target_price=140,alert_table_name='wjc_gold'):
     # 轮番查询玩具城各个材料的价格,写入db
     url_dict={
         'wjc_gem_str_lv7':'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-6c8cj0-49ravp-01wbns_1676vw-0-0-pu-0-0-0.html',
@@ -190,7 +219,7 @@ def main_start(alert_on=True,target_price_gold=140):
 
                 # 监测模块,(开关, 防重复播报)
                 if alert_on==True:
-                    query_result=alert(target_price_gold=target_price_gold)
+                    query_result=alert(target_price=target_price,table_name=alert_table_name)
                     if (query_result is None) or (query_result==openweb_url):
                         pass
                     else:
@@ -222,5 +251,5 @@ if __name__ == '__main__':
     #     main2(target_price_gold=130,target_price_manao=55)
 
     # 轮番查询玩具城各个材料的价格,写入db
-    main_start(alert_on=False,target_price_gold=130)
+    main_start(alert_on=True,target_price=65,alert_table_name='wjc_gem_str_lv7')
     # alert()
