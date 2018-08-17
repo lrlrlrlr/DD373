@@ -14,19 +14,34 @@ def parse_html(html):
     tags = html.find_all('div', 'box money_ner')
     infos = list()
     for i in tags:
+        # 确定在html里面找各个数据,如果找不到,则返回None
+        # todo 这里用了很多try-except, 能不能修改得更简洁
         try:
-
             # 总价
             total_price = i.find_all('div', 'money_text')[0].text
+
             # 购买链接
             href = 'https://www.dd373.com' + i.find_all('a', 'titleText')[0]['href']
+
+            try:
             # 单价('xxxx万金/元')
-            single_price = i.find_all('span', 'red')[0].parent.text or i.find_all(text=re.compile('1元=\d+\.\d+[万金|个]'))[0]
+                single_price = i.find_all('span', 'red')[0].parent.text or i.find_all(text=re.compile('1元=\d+\.\d+[万金|个]'))[0]
+            except:
+                single_price=None
+
             # 纯单价(数字)
-            raw_single_price = float(re.search(r'(?<=1元=)\d+\.\d+(?=[万金|个|组])', single_price).group())
+
+            try:
+                raw_single_price = float(re.search(r'(?<=1元=)\d+\.\d+(?=[万金|个|组])', single_price).group())
+            except:
+                raw_single_price=re.search('[\d|\.]+',total_price).group()
+
             # 商品数量
-            amount = i.find_all('div', 'num left')[0].text.strip()
-            
+            try:
+                amount = i.find_all('div', 'num left')[0].text.strip()
+            except:
+                amount=0
+
             # print(f'total price:{total_price}, single price:{raw_single_price}, amount:{amount}, {href}')
             info = {
                 'total_price': total_price,
@@ -34,7 +49,6 @@ def parse_html(html):
                 'raw_single_price': raw_single_price,
                 'amount': amount
             }
-            
             infos.append(info)
         except:
             pass
@@ -94,15 +108,23 @@ def write_db(info={'amount': '1', 'href': 'https://www.dd373.com/buy/third-25913
     # 提交
     conn.commit()
     conn.close()
-
+    # 成功写入则返回成功写入的表名和最新单价.
+    return (table_name,info.get('raw_single_price'))
 
 
     pass
 
 
-def price_parse(infos):
-    # 价格排序
-    infos.sort(key=lambda x:x.get('raw_single_price'),reverse=True)
+def price_parse(infos,table_name):
+    # 价格排序: 放入一个数据列表,返回最便宜且有货的那一条数据.
+
+    # 如果是金币和价格表,则返回raw_single_price最高的; 如果是宝石,则返回raw_single_price最低的!
+    if 'gold' in table_name or 'manao' in table_name:
+        reverse=True
+    elif 'gem' in table_name:
+        reverse=False
+
+    infos.sort(key=lambda x:x.get('raw_single_price'),reverse=reverse)
 
     # 筛选出有amount(有货)的最低价商品
     for info in infos:
@@ -118,12 +140,12 @@ def main(url,table_name):
     html = get_html(url)
     infos = parse_html(html)
     # 用price_parse筛选出有货的最低价 && 写入数据库
-    info=price_parse(infos)
-
-    if write_db(info,table_name) is None:
+    info=price_parse(infos,table_name)
+    result=write_db(info,table_name)
+    if result is None:
         print(f"{time.ctime()}, no data has been found...")
     else:
-        print(f"{time.ctime()}, writing database...")
+        print(f"{time.ctime()}, writing database: {result}")
 
 
 def alert(target_price_gold=130,table_name='wjc_gold'):
@@ -147,14 +169,16 @@ def alert(target_price_gold=130,table_name='wjc_gold'):
 
 
 
+
 def main_start(alert_on=True,target_price_gold=140):
     # 轮番查询玩具城各个材料的价格,写入db
     url_dict={
+        'wjc_gem_str_lv7':'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-6c8cj0-49ravp-01wbns_1676vw-0-0-pu-0-0-0.html',
         'wjc_gold': 'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html',
         'wjc_manao':'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-knrc07-0-0-0-0-0-0-0-0.html',
         'wjc_xiaomanao':'https://www.dd373.com/s/1xj2qx-wjm3vp-r9xvef-0-0-0-fqujdj-0-0-0-0-0-0-0-0.html',
         'nwz_gold':'https://www.dd373.com/s/1xj2qx-wjm3vp-qmfpmj-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html',
-        'tly_gold':'https://www.dd373.com/s/1xj2qx-wjm3vp-rs23j0-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html'
+        'tly_gold':'https://www.dd373.com/s/1xj2qx-wjm3vp-rs23j0-0-0-0-tr1r70-0-0-0-0-0-0-0-0.html',
     }
 
 
